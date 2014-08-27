@@ -12,12 +12,24 @@ extra-source-files:  README.md
 cabal-version:       >=1.10
 
 executable tutorial01
-  main-is:             Main.hs
-  -- other-modules:       
+  main-is:             Tutorial01/Main.hs
+  other-modules:       Common.Window
   -- other-extensions:    
   build-depends:       base >=4.7 && <4.8
                        , OpenGL >= 2.9
-                       , GLUT   >= 2.5
-  hs-source-dirs:      src, src/Tutorial01
+                       , GLFW-b >= 1.4
+  hs-source-dirs:      src
+  default-language:    Haskell2010
+  ghc-options:         -Wall
+
+executable tutorial02
+  main-is:             Tutorial02/Main.hs
+  other-modules:       Common.Shader
+  -- other-extensions:    
+  build-depends:       base >=4.7 && <4.8
+                       , OpenGL >= 2.9
+                       , GLFW-b >= 1.4
+                       , bytestring >= 0.10
+  hs-source-dirs:      src
   default-language:    Haskell2010
   ghc-options:         -Wall
