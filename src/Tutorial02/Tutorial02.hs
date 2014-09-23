@@ -8,8 +8,10 @@ import Common.Window (untilClosed)
 import Foreign.Marshal.Array
 import Foreign.Ptr
 import Foreign.Storable
-import Graphics.Rendering.OpenGL
+import Graphics.Rendering.OpenGL hiding (scale, translate, perspective)
 import qualified Graphics.UI.GLFW as GLFW
+import Graphics.Math.GLMat
+import qualified Graphics.Math.GLMat as GM
 
 bufferOffset :: Integral a => a -> Ptr b
 bufferOffset = plusPtr nullPtr . fromIntegral
@@ -25,7 +27,7 @@ main = do
   GLFW.windowHint $ GLFW.WindowHint'OpenGLProfile GLFW.OpenGLProfile'Core
 
   -- Open a window and create its OpenGL context
-  w@(Just window) <- GLFW.createWindow 1024 768 "Tutorial02" Nothing Nothing
+  w@(Just window) <- GLFW.createWindow 1024 768 "Tutorial03" Nothing Nothing
   GLFW.makeContextCurrent w
 
   -- Ensure we can capture the escape key being pressed below
@@ -43,6 +45,8 @@ main = do
                                 "./src/Tutorial02/SimpleVertexShader.vert"
                 , ShaderRequest FragmentShader
                                 "./src/Tutorial02/SimpleFragmentShader.frag" ]
+
+  matrixId <- get $ uniformLocation programId "MVP"
 
   let triangle = [ Vertex3 (-1) (-1) 0
                  , Vertex3   1  (-1) 0
@@ -62,6 +66,13 @@ main = do
 
     -- Use our shader
     currentProgram $= Just programId
+
+    let p = perspective 45 (4/3) 0.1 100
+        v = GM.lookAt (GM.GLVector 4 3 3) (GM.GLVector 0 0 0)
+                      (GM.GLVector 0 1 0)
+        m = identity
+        mat = p >*< v >*< m
+    uniformMatrixF matrixId mat
 
     -- 1rst attribute buffer : vertices
     let vPosition  = AttribLocation 0
