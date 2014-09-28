@@ -2,6 +2,8 @@ module Main where
 
 import Common.Shader (ShaderRequest (..), loadShaders)
 import Common.Window (untilClosed)
+import Control.Applicative ((<$>), (<*>))
+import Control.Monad (replicateM)
 import Foreign.Marshal.Array
 import Foreign.Ptr
 import Foreign.Storable
@@ -9,6 +11,7 @@ import Graphics.Math.GLMat
 import Graphics.Math.GLMat as GM
 import Graphics.Rendering.OpenGL
 import qualified Graphics.UI.GLFW as GLFW
+import System.Random (randomRIO)
 
 bufferOffset :: Integral a => a -> Ptr b
 bufferOffset = plusPtr nullPtr . fromIntegral
@@ -115,10 +118,21 @@ main = do
       numVertices = length cube
       vertexSize  = sizeOf $ head cube
 
+  -- One color for each vertex. They are generated randomly.
+  colors <- replicateM numVertices randomColor
+  let numColors = length colors
+      colorSize = sizeOf $ head colors
+
   vertexBuffer <- genObjectName
   bindBuffer ArrayBuffer $= Just vertexBuffer
   withArray cube $ \ptr -> do
     let size = fromIntegral (numVertices * vertexSize)
+    bufferData ArrayBuffer $= (size, ptr, StaticDraw)
+
+  colorBuffer <- genObjectName
+  bindBuffer ArrayBuffer $= Just colorBuffer
+  withArray colors $ \ptr -> do
+    let size = fromIntegral (numColors * colorSize)
     bufferData ArrayBuffer $= (size, ptr, StaticDraw)
 
   window `untilClosed` (\_ -> do
@@ -138,17 +152,33 @@ main = do
     vertexAttribPointer vPosition $=
       (ToFloat,
        VertexArrayDescriptor 3 Float 0 (bufferOffset (0 * vertexSize)))
+
+    -- 2nd attribute buffer: colors
+    let cPosition = AttribLocation 1
+    vertexAttribArray cPosition $= Enabled
+    bindBuffer ArrayBuffer $= Just colorBuffer
+    vertexAttribPointer cPosition $=
+      (ToFloat,
+       VertexArrayDescriptor 3 Float 0 (bufferOffset (0 * colorSize)))
+      
     drawArrays Triangles 0 (fromIntegral numVertices)
 
     vertexAttribArray vPosition $= Disabled
+    vertexAttribArray cPosition $= Disabled
 
     -- Swap buffers
     GLFW.swapBuffers window )
 
   -- Cleanup VBO and shader
   deleteObjectName vertexBuffer
+  deleteObjectName colorBuffer
   deleteObjectName programId
   deleteObjectName vertexArrayId
 
   -- Close OpenGL
   GLFW.terminate
+
+randomColor :: IO (Color3 GLfloat)
+randomColor = Color3 <$> randomRIO (0, 1)
+                     <*> randomRIO (0, 1)
+                     <*> randomRIO (0, 1)

@@ -45,6 +45,7 @@ executable tutorial04
                        , OpenGLRaw >= 1.5
                        , GLFW-b >= 1.4
                        , bytestring >= 0.10
+                       , random
                        , glmat
   hs-source-dirs:      src, src/Tutorial04
   default-language:    Haskell2010
